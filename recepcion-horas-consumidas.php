@@ -11,7 +11,14 @@ if (!defined('ABSPATH')) {
 }
 
 function automation_hours_shortcode() {
+    // 1️⃣ Intentar obtener datos cacheados
+    $cached_data = get_transient('automation_hours_cache');
 
+    if ($cached_data !== false) {
+        return $cached_data;
+    }
+    
+    //2️⃣ Si no hay cache, llamar API
     $api_url = 'https://overneatly-untarnished-lisa.ngrok-free.dev/api/hours';
 
 
@@ -53,6 +60,10 @@ function automation_hours_shortcode() {
     $output .= '<div class="automation-hours-value"><strong>Hours:</strong> ' . $hours . '</div>';
     $output .= '<div class="automation-source"><strong>Source:</strong> ' . $source . '</div>';
     $output .= '</div>';
+
+    
+    // 3️⃣ Guardar en cache por 5 minutos
+    set_transient('automation_hours_cache', $output, 5 * MINUTE_IN_SECONDS);
 
     return $output;
 }

@@ -17,7 +17,7 @@ function automation_hours_shortcode() {
     if ($cached_data !== false) {
         return $cached_data;
     }
-    
+
     //2️⃣ Si no hay cache, llamar API
     $api_url = 'https://overneatly-untarnished-lisa.ngrok-free.dev/api/hours';
 
@@ -42,30 +42,68 @@ function automation_hours_shortcode() {
     $body = wp_remote_retrieve_body($response);
     $data = json_decode($body, true);
 
-    // Si la API devuelve un array de resultados, tomar el primero
-    if (isset($data[0])) {
-        $data = $data[0];
+    
+    $hours_by_date = [];
+
+    if (!empty($data) && is_array($data)) {
+        foreach ($data as $item) {
+            if (isset($item['date'], $item['hours'])) {
+                $hours_by_date[$item['date']] = $item['hours'];
+            }
+        }
     }
+
 
     if (empty($data) || !isset($data['date'], $data['hours'], $data['source'])) {
         return '<div class="automation-error">No hours data available.</div>';
     }
 
-    $date   = esc_html($data['date']);
-    $hours  = esc_html($data['hours']);
-    $source = esc_html($data['source']);
-
-    $output  = '<div class="automation-hours">';
-    $output .= '<div class="automation-date"><strong>Date:</strong> ' . $date . '</div>';
-    $output .= '<div class="automation-hours-value"><strong>Hours:</strong> ' . $hours . '</div>';
-    $output .= '<div class="automation-source"><strong>Source:</strong> ' . $source . '</div>';
-    $output .= '</div>';
-
     
-    // 3️⃣ Guardar en cache por 5 minutos
-    set_transient('automation_hours_cache', $output, 5 * MINUTE_IN_SECONDS);
+    $output  = '<div class="automation-grid">';
 
-    return $output;
+for ($i = 29; $i >= 0; $i--) {
+    $date = date('Y-m-d', strtotime("-$i days"));
+    $hours = isset($hours_by_date[$date]) ? $hours_by_date[$date] : 0;
+
+    // definir nivel de color
+    if ($hours == 0) {
+        $level = 'level-0';
+    } elseif ($hours < 2) {
+        $level = 'level-1';
+    } elseif ($hours < 4) {
+        $level = 'level-2';
+    } else {
+        $level = 'level-3';
+    }
+
+    $output .= '<div class="day ' . esc_attr($level) . '" title="' . esc_attr($date . ' - ' . $hours . 'h') . '"></div>';
+}
+
+$output .= '</div>';
 }
 
 add_shortcode('automation_hours', 'automation_hours_shortcode');
+
+function automation_hours_styles() {
+    echo '
+    <style>
+    .automation-grid {
+        display: grid;
+        grid-template-columns: repeat(30, 14px);
+        gap: 4px;
+    }
+
+    .day {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+    }
+
+    .level-0 { background: #ebedf0; }
+    .level-1 { background: #9be9a8; }
+    .level-2 { background: #40c463; }
+    .level-3 { background: #216e39; }
+    </style>
+    ';
+}
+add_action('wp_head', 'automation_hours_styles');

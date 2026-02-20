@@ -10,39 +10,33 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+
 function automation_hours_shortcode() {
 
-    $api_url = 'http://localhost:3000/api/hours';
-    $api_key = 'TU_API_KEY_AQUI';
+    $api_url = 'https://overneatly-untarnished-lisa.ngrok-free.dev/api/hours';
 
-    $response = wp_remote_get($api_url, [
-        'headers' => [
-            'x-api-key' => $api_key
-        ]
-    ]);
+    $response = wp_remote_get($api_url);
 
     if (is_wp_error($response)) {
-        return 'Error connecting to API';
+        return '<div class="automation-error">Unable to retrieve hours at the moment.</div>';
     }
 
     $body = wp_remote_retrieve_body($response);
     $data = json_decode($body, true);
 
-    if (empty($data)) {
-        return 'No hours found.';
+    if (empty($data) || !isset($data['date'], $data['hours'], $data['source'])) {
+        return '<div class="automation-error">No hours data available.</div>';
     }
 
-    $output = '<ul>';
+    $date   = esc_html($data['date']);
+    $hours  = esc_html($data['hours']);
+    $source = esc_html($data['source']);
 
-    foreach ($data as $row) {
-        $output .= '<li>';
-        $output .= 'Date: ' . esc_html($row['date']) . ' | ';
-        $output .= 'Hours: ' . esc_html($row['hours']) . ' | ';
-        $output .= 'Source: ' . esc_html($row['source']);
-        $output .= '</li>';
-    }
-
-    $output .= '</ul>';
+    $output  = '<div class="automation-hours">';
+    $output .= '<div class="automation-date"><strong>Date:</strong> ' . $date . '</div>';
+    $output .= '<div class="automation-hours-value"><strong>Hours:</strong> ' . $hours . '</div>';
+    $output .= '<div class="automation-source"><strong>Source:</strong> ' . $source . '</div>';
+    $output .= '</div>';
 
     return $output;
 }

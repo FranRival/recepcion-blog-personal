@@ -33,7 +33,9 @@ function automation_hours_shortcode() {
         $data = $data[0];
     }
 
-    return '<pre>' . print_r($data, true) . '</pre>';
+    if (empty($data) || !isset($data['date'], $data['hours'], $data['source'])) {
+        return '<div class="automation-error">No hours data available.</div>';
+    }
 
     $date   = esc_html($data['date']);
     $hours  = esc_html($data['hours']);

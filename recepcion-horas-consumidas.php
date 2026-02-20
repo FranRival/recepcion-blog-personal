@@ -28,9 +28,7 @@ function automation_hours_shortcode() {
     $body = wp_remote_retrieve_body($response);
     $data = json_decode($body, true);
 
-    if (empty($data) || !isset($data['date'], $data['hours'], $data['source'])) {
-        return '<div class="automation-error">No hours data available.</div>';
-    }
+    return '<pre>' . print_r($data, true) . '</pre>';
 
     $date   = esc_html($data['date']);
     $hours  = esc_html($data['hours']);

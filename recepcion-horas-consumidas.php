@@ -28,6 +28,11 @@ function automation_hours_shortcode() {
     $body = wp_remote_retrieve_body($response);
     $data = json_decode($body, true);
 
+    // Si la API devuelve un array de resultados, tomar el primero
+    if (isset($data[0])) {
+        $data = $data[0];
+    }
+
     return '<pre>' . print_r($data, true) . '</pre>';
 
     $date   = esc_html($data['date']);

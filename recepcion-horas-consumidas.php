@@ -54,9 +54,9 @@ function automation_hours_shortcode() {
     }
 
 
-    if (empty($data) || !isset($data['date'], $data['hours'], $data['source'])) {
-        return '<div class="automation-error">No hours data available.</div>';
-    }
+    if (empty($hours_by_date)) {
+    return '<div class="automation-error">No hours data available.</div>';
+}
 
     
     $output  = '<div class="automation-grid">';
@@ -80,6 +80,11 @@ for ($i = 29; $i >= 0; $i--) {
 }
 
 $output .= '</div>';
+
+// Guardar en cache
+set_transient('automation_hours_cache', $output, 5 * MINUTE_IN_SECONDS);
+
+return $output;
 }
 
 add_shortcode('automation_hours', 'automation_hours_shortcode');

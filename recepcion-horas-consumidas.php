@@ -10,12 +10,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-
 function automation_hours_shortcode() {
 
     $api_url = 'https://overneatly-untarnished-lisa.ngrok-free.dev/api/hours';
 
-    $response = wp_remote_get($api_url);
+
+	$response = wp_remote_get($api_url, array(
+    'headers' => array(
+        'x-api-key' => AUTOMATION_API_KEY
+    )
+));
 
     if (is_wp_error($response)) {
         return '<div class="automation-error">Unable to retrieve hours at the moment.</div>';

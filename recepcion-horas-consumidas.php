@@ -16,6 +16,7 @@ function automation_hours_shortcode() {
 
 
 	$response = wp_remote_get($api_url, array(
+    'timeout' => 10,
     'headers' => array(
         'x-api-key' => AUTOMATION_API_KEY
     )
@@ -23,6 +24,12 @@ function automation_hours_shortcode() {
 
     if (is_wp_error($response)) {
         return '<div class="automation-error">Unable to retrieve hours at the moment.</div>';
+    }
+
+    $status_code = wp_remote_retrieve_response_code($response);
+
+    if ($status_code !== 200) {
+        return '<div class="automation-error">API returned error (' . esc_html($status_code) . ').</div>';
     }
 
     $body = wp_remote_retrieve_body($response);

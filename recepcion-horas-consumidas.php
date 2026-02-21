@@ -129,7 +129,22 @@ return $output;
 
 add_shortcode('automation_hours', 'automation_hours_shortcode');
 
-add_action('wp_head', 'automation_hour_styles');
+add_action('wp_head', 'automation_hours_styles');
+
+register_activation_hook(__FILE__, 'automation_schedule_daily_sync');
+
+function automation_schedule_daily_sync() {
+    if (!wp_next_scheduled('automation_daily_sync')) {
+        wp_schedule_event(time(), 'daily', 'automation_daily_sync');
+    }
+}
+
+add_action('automation_daily_sync', 'automation_sync_from_api');
+
+
+function automation_sync_from_api() {
+    // Aquí luego pondremos la llamada a AWS
+}
 
 
 function automation_hours_styles() {

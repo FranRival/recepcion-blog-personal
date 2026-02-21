@@ -142,6 +142,27 @@ function automation_schedule_daily_sync() {
 
 add_action('automation_daily_sync', 'automation_sync_from_api');
 
+register_activation_hook(__FILE__, 'automation_create_table');
+
+function automation_create_table() {
+    global $wpdb;
+
+    $table_name = $wpdb->prefix . 'automation_hours';
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $sql = "CREATE TABLE $table_name (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        date DATE NOT NULL,
+        hours FLOAT NOT NULL DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY date (date)
+    ) $charset_collate;";
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+}
+
 
 function automation_sync_from_api() {
     // Aquí luego pondremos la llamada a AWS

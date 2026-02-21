@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.0
+Version: 1.10
 Author: Emmanuel
 */
 
@@ -94,7 +94,8 @@ function automation_hours_styles() {
     <style>
     .automation-grid {
         display: grid;
-        grid-template-columns: repeat(30, 14px);
+        grid-template-rows: repeat(7, 14px);
+        grid-auto-flow: column;
         gap: 4px;
     }
 

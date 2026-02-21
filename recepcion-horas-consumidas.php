@@ -165,7 +165,47 @@ function automation_create_table() {
 
 
 function automation_sync_from_api() {
-    // Aquí luego pondremos la llamada a AWS
+    global $wpdb;
+
+    $table_name = $wpdb->prefix . 'automation_hours';
+    $api_url = 'https://overneatly-untarnished-lisa.ngrok-free.dev/api/hours';
+
+    $response = wp_remote_get($api_url, array(
+        'timeout' => 20,
+        'headers' => array(
+            'x-api-key' => AUTOMATION_API_KEY
+        )
+    ));
+
+    if (is_wp_error($response)) {
+        return;
+    }
+
+    if (wp_remote_retrieve_response_code($response) !== 200) {
+        return;
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+
+    if (empty($data) || !is_array($data)) {
+        return;
+    }
+
+    foreach ($data as $item) {
+        if (isset($item['date'], $item['hours'])) {
+
+            $wpdb->replace(
+                $table_name,
+                array(
+                    'date'  => sanitize_text_field($item['date']),
+                    'hours' => floatval($item['hours'])
+                ),
+                array('%s', '%f')
+            );
+        }
+    }
+
 }
 
 

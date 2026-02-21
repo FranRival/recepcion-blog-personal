@@ -220,3 +220,29 @@ function automation_hours_styles() {
     </style>
     ';
 }
+
+
+//automation_hours_shortcode() -
+/*
+Antes de cambiar la funcion:
+
+Usuario entra a la pagina > Wordpress llama a la API > Recibe JSON > lo convierte en array > Genera el HTML > lo guarda por 5 minutos
+
+
+- Depende del servidor externo
+- Dependiente del cache 
+- No persistente
+
+Ahora: 
+
+Cron (una vez al dia) > Wordpress llama a la API > Guarda datos en base de datos > Shortcode solo lee la base de datos
+
+- no depende de visitas
+- no satura la API
+- no depende de cache
+- permanencia de datos aunque el servidor se reinicie
+- arquitectura real de produccion 
+
+ANTES: Fronted hace llamadas externas en tiempo real
+AHORA: backend sincronizando datos una vez al dia. Y fronted leyendo base local
+*/

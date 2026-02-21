@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.10
+Version: 1.11
 Author: Emmanuel
 */
 
@@ -57,29 +57,37 @@ function automation_hours_shortcode() {
     if (empty($hours_by_date)) {
     return '<div class="automation-error">No hours data available.</div>';
 }
-
     
     $output  = '<div class="automation-grid">';
 
-for ($i = 29; $i >= 0; $i--) {
-    $date = date('Y-m-d', strtotime("-$i days"));
-    $hours = isset($hours_by_date[$date]) ? $hours_by_date[$date] : 0;
+    $start = new DateTime('2026-01-01');
+    $end   = new DateTime('2026-12-31');
+    $end->modify('+1 day'); // incluir el último día
 
-    // definir nivel de color
-    if ($hours == 0) {
-        $level = 'level-0';
-    } elseif ($hours < 2) {
-        $level = 'level-1';
-    } elseif ($hours < 4) {
-        $level = 'level-2';
-    } else {
-        $level = 'level-3';
-    }
+    $interval = new DateInterval('P1D');
+    $period = new DatePeriod($start, $interval, $end);
 
-    $output .= '<div class="day ' . esc_attr($level) . '" title="' . esc_attr($date . ' - ' . $hours . 'h') . '"></div>';
+    $output  = '<div class="automation-grid">';
+
+    foreach ($period as $date_obj) {
+        $date = $date_obj->format('Y-m-d');
+        $hours = isset($hours_by_date[$date]) ? $hours_by_date[$date] : 0;
+
+        if ($hours == 0) {
+            $level = 'level-0';
+        } elseif ($hours < 2) {
+            $level = 'level-1';
+        } elseif ($hours < 4) {
+            $level = 'level-2';
+        } else {
+            $level = 'level-3';
+        }
+
+        $output .= '<div class="day ' . esc_attr($level) . '" title="' . esc_attr($date . ' - ' . $hours . 'h') . '"></div>';
 }
 
 $output .= '</div>';
+
 
 // Guardar en cache
 set_transient('automation_hours_cache', $output, 5 * MINUTE_IN_SECONDS);

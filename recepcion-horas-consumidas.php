@@ -11,60 +11,35 @@ if (!defined('ABSPATH')) {
 }
 
 function automation_hours_shortcode() {
-    // 1️⃣ Intentar obtener datos cacheados
-    $cached_data = get_transient('automation_hours_cache');
 
-    if ($cached_data !== false) {
-        return $cached_data;
-    }
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'automation_hours';
 
-    //2️⃣ Si no hay cache, llamar API
-    $api_url = 'https://overneatly-untarnished-lisa.ngrok-free.dev/api/hours';
+    // Obtener datos desde base de datos
+    $results = $wpdb->get_results(
+        "SELECT date, hours FROM $table_name",
+        ARRAY_A
+    );
 
+    $hours_by_date = array();
 
-	$response = wp_remote_get($api_url, array(
-    'timeout' => 10,
-    'headers' => array(
-        'x-api-key' => AUTOMATION_API_KEY
-    )
-));
-
-    if (is_wp_error($response)) {
-        return '<div class="automation-error">Unable to retrieve hours at the moment.</div>';
-    }
-
-    $status_code = wp_remote_retrieve_response_code($response);
-
-    if ($status_code !== 200) {
-        return '<div class="automation-error">API returned error (' . esc_html($status_code) . ').</div>';
-    }
-
-    $body = wp_remote_retrieve_body($response);
-    $data = json_decode($body, true);
-
-    
-    $hours_by_date = [];
-
-    if (!empty($data) && is_array($data)) {
-        foreach ($data as $item) {
-            if (isset($item['date'], $item['hours'])) {
-                $hours_by_date[$item['date']] = $item['hours'];
-            }
+    if (!empty($results)) {
+        foreach ($results as $row) {
+            $hours_by_date[$row['date']] = $row['hours'];
         }
     }
 
-
     if (empty($hours_by_date)) {
-    return '<div class="automation-error">No hours data available.</div>';
-}
-    
+        return '<div class="automation-error">No hours data available.</div>';
+    }
+
     $output  = '<div class="automation-wrapper">';
     $output .= '<div class="months-row">';
 
     $year = date('Y');
     $start = new DateTime($year . '-01-01');
     $end   = new DateTime($year . '-12-31');
-    $end->modify('+1 day'); // incluir el último día
+    $end->modify('+1 day');
 
     $interval = new DateInterval('P1D');
     $period = new DatePeriod($start, $interval, $end);
@@ -72,60 +47,52 @@ function automation_hours_shortcode() {
     $week_index = 0;
     $day_count = 0;
 
-    // ===========LOOP SOLO PARA MESES ====
+    // LOOP MESES
     foreach ($period as $date_obj) {
 
-    $day_of_month = $date_obj->format('j');
-    $month_label = $date_obj->format('M');
+        $day_of_month = $date_obj->format('j');
+        $month_label = $date_obj->format('M');
 
-    // Cada 7 días aumenta columna
-    if ($day_count % 7 == 0) {
-        $week_index++;
+        if ($day_count % 7 == 0) {
+            $week_index++;
+        }
+
+        if ($day_of_month == 1) {
+            $output .= '<span class="month-label" style="grid-column:' . $week_index . ';">' . esc_html($month_label) . '</span>';
+        }
+
+        $day_count++;
     }
 
-    // Si es el primer día del mes
-    if ($day_of_month == 1) {
-        $output .= '<span class="month-label" style="grid-column:' . $week_index . ';">' . esc_html($month_label) . '</span>';
+    $output .= '</div>';
+    $output .= '<div class="automation-grid">';
+
+    // Reiniciar periodo
+    $period = new DatePeriod($start, $interval, $end);
+
+    // LOOP DIAS
+    foreach ($period as $date_obj){
+
+        $date = $date_obj->format('Y-m-d');
+        $hours = isset($hours_by_date[$date]) ? (float)$hours_by_date[$date] : 0.0;
+
+        if ($hours === 0.0) {
+            $level = 'level-0';
+        } elseif ($hours < 2) {
+            $level = 'level-1';
+        } elseif ($hours < 4) {
+            $level = 'level-2';
+        } else {
+            $level = 'level-3';
+        }
+
+        $output .= '<div class="day ' . esc_attr($level) . '" title="' . esc_attr($date . ' - ' . $hours . 'h') . '"></div>';
     }
 
-    $day_count++;
-}
+    $output .= '</div>';
+    $output .= '</div>';
 
-$output .= '</div>';
-
-// =========AHORA ABRIMOS GRID =====
-$output .= '<div class="automation-grid">';
-
-//Reiniciamos periodo porque ya lo consumimos
-$period = new DatePeriod($start, $interval, $end);
-
-// =====LOOP PARA DIAS ====
-foreach ($period as $date_obj){
-    $date = $date_obj->format('Y-m-d');
-    $hours = isset($hours_by_date[$date]) ? $hours_by_date[$date] : 0;
-
-    if ((float)$hours === 0.0) {
-        $level = 'level-0';
-    } elseif ($hours < 2) {
-        $level = 'level-1';
-    } elseif ($hours < 4) {
-        $level = 'level-2';
-    } else {
-        $level = 'level-3';
-    }
-
-    $output .= '<div class="day ' . esc_attr($level) . '" title="' . esc_attr($date . ' - ' . $hours . 'h') . '"></div>';
-
-}
-
-$output .= '</div>'; // cerrar automation-grid
-$output .= '</div>'; // cerrar automation-wrapper
-
-
-// Guardar en cache
-set_transient('automation_hours_cache', $output, 5 * MINUTE_IN_SECONDS);
-
-return $output;
+    return $output;
 }
 
 add_shortcode('automation_hours', 'automation_hours_shortcode');

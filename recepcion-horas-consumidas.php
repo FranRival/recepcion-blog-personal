@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.11
+Version: 1.11.XX
 Author: Emmanuel
 */
 
@@ -61,8 +61,9 @@ function automation_hours_shortcode() {
     $output  = '<div class="automation-wrapper">';
     $output .= '<div class="months-row">';
 
-    $start = new DateTime('2026-01-01');
-    $end   = new DateTime('2026-12-31');
+    $year = date('Y');
+    $start = new DateTime($year . '-01-01');
+    $end   = new DateTime($year . '-12-31');
     $end->modify('+1 day'); // incluir el último día
 
     $interval = new DateInterval('P1D');
@@ -103,7 +104,7 @@ foreach ($period as $date_obj){
     $date = $date_obj->format('Y-m-d');
     $hours = isset($hours_by_date[$date]) ? $hours_by_date[$date] : 0;
 
-    if ($hours == 0) {
+    if ((float)$hours === 0.0) {
         $level = 'level-0';
     } elseif ($hours < 2) {
         $level = 'level-1';

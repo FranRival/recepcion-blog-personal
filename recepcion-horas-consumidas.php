@@ -58,7 +58,8 @@ function automation_hours_shortcode() {
     return '<div class="automation-error">No hours data available.</div>';
 }
     
-    $output  = '<div class="automation-grid">';
+    $output  = '<div class="automation-wrapper">';
+    $output .= '<div class="months-row">';
 
     $start = new DateTime('2026-01-01');
     $end   = new DateTime('2026-12-31');
@@ -67,26 +68,57 @@ function automation_hours_shortcode() {
     $interval = new DateInterval('P1D');
     $period = new DatePeriod($start, $interval, $end);
 
-    $output  = '<div class="automation-grid">';
+    $week_index = 0;
+    $day_count = 0;
 
+    // ===========LOOP SOLO PARA MESES ====
     foreach ($period as $date_obj) {
-        $date = $date_obj->format('Y-m-d');
-        $hours = isset($hours_by_date[$date]) ? $hours_by_date[$date] : 0;
 
-        if ($hours == 0) {
-            $level = 'level-0';
-        } elseif ($hours < 2) {
-            $level = 'level-1';
-        } elseif ($hours < 4) {
-            $level = 'level-2';
-        } else {
-            $level = 'level-3';
-        }
+    $day_of_month = $date_obj->format('j');
+    $month_label = $date_obj->format('M');
 
-        $output .= '<div class="day ' . esc_attr($level) . '" title="' . esc_attr($date . ' - ' . $hours . 'h') . '"></div>';
+    // Cada 7 días aumenta columna
+    if ($day_count % 7 == 0) {
+        $week_index++;
+    }
+
+    // Si es el primer día del mes
+    if ($day_of_month == 1) {
+        $output .= '<span class="month-label" style="grid-column:' . $week_index . ';">' . esc_html($month_label) . '</span>';
+    }
+
+    $day_count++;
 }
 
 $output .= '</div>';
+
+// =========AHORA ABRIMOS GRID =====
+$output .= '<div class="automation-grid">';
+
+//Reiniciamos periodo porque ya lo consumimos
+$period = new DatePeriod($start, $interval, $end);
+
+// =====LOOP PARA DIAS ====
+foreach ($period as $date_obj){
+    $date = $date_obj->format('Y-m-d');
+    $hours = isset($hours_by_date[$date]) ? $hours_by_date[$date] : 0;
+
+    if ($hours == 0) {
+        $level = 'level-0';
+    } elseif ($hours < 2) {
+        $level = 'level-1';
+    } elseif ($hours < 4) {
+        $level = 'level-2';
+    } else {
+        $level = 'level-3';
+    }
+
+    $output .= '<div class="day ' . esc_attr($level) . '" title="' . esc_attr($date . ' - ' . $hours . 'h') . '"></div>';
+
+}
+
+$output .= '</div>'; // cerrar automation-grid
+$output .= '</div>'; // cerrar automation-wrapper
 
 
 // Guardar en cache
@@ -97,9 +129,32 @@ return $output;
 
 add_shortcode('automation_hours', 'automation_hours_shortcode');
 
+add_action('wp_head', 'automation_hour_styles');
+
+
 function automation_hours_styles() {
     echo '
     <style>
+
+    .automation-wrapper {
+        display: inline-block;
+    }
+
+    .months-row {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 14px;
+        gap: 4px;
+        margin-bottom: 6px;
+        font-size: 10px;
+    }
+
+    .month-label {
+        position: relative;
+        transform: translateX(-4px);
+        font-weight: bold;
+    }
+
     .automation-grid {
         display: grid;
         grid-template-rows: repeat(7, 14px);
@@ -117,7 +172,7 @@ function automation_hours_styles() {
     .level-1 { background: #9be9a8; }
     .level-2 { background: #40c463; }
     .level-3 { background: #216e39; }
+
     </style>
     ';
 }
-add_action('wp_head', 'automation_hours_styles');

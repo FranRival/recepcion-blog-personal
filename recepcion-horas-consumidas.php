@@ -172,6 +172,7 @@ function automation_sync_from_api() {
     }
 
     $body = wp_remote_retrieve_body($response);
+    error_log('API RESPONSE: ' . $body);
     $data = json_decode($body, true);
 
     if (empty($data) || !is_array($data)) {

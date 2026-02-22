@@ -15,6 +15,15 @@ function automation_hours_shortcode() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'automation_hours';
 
+    $atts = shortcode_atts(
+        array(
+            'year' => date('Y'),
+        ),
+        $atts
+    );
+
+    $year = intval($atts['year']);
+
     // Obtener datos desde base de datos
     $results = $wpdb->get_results(
     $wpdb->prepare(
@@ -46,7 +55,6 @@ function automation_hours_shortcode() {
     $atts
     );
 
-    $year = intval($atts['year']);
     
     $start = new DateTime($year . '-01-01');
     $end   = new DateTime($year . '-12-31');

@@ -17,8 +17,11 @@ function automation_hours_shortcode() {
 
     // Obtener datos desde base de datos
     $results = $wpdb->get_results(
-        "SELECT date, hours FROM $table_name",
-        ARRAY_A
+    $wpdb->prepare(
+        "SELECT date, hours FROM $table_name WHERE YEAR(date) = %d",
+        $year
+    ),
+    ARRAY_A
     );
 
     $hours_by_date = array();
@@ -36,7 +39,15 @@ function automation_hours_shortcode() {
     $output  = '<div class="automation-wrapper">';
     $output .= '<div class="months-row">';
 
-    $year = date('Y');
+    $atts = shortcode_atts(
+    array(
+        'year' => date('Y'),
+    ),
+    $atts
+    );
+
+    $year = intval($atts['year']);
+    
     $start = new DateTime($year . '-01-01');
     $end   = new DateTime($year . '-12-31');
     $end->modify('+1 day');
@@ -245,4 +256,7 @@ Cron (una vez al dia) > Wordpress llama a la API > Guarda datos en base de datos
 
 ANTES: Fronted hace llamadas externas en tiempo real
 AHORA: backend sincronizando datos una vez al dia. Y fronted leyendo base local
+
+
+133 - 134 - 15
 */

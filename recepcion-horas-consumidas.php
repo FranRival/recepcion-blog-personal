@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.11.XX
+Version: 1.11.008
 Author: Emmanuel
 */
 
@@ -84,7 +84,25 @@ function automation_hours_shortcode() {
     }
 
     $output .= '</div>';
+    $output .= '<div class="automation-container">';
+  
+    $output .= '<div class="weekdays">';
+    $output .= '<span>Mon</span>';
+    $output .= '<span>Tue</span>';
+    $output .= '<span>Wed</span>';
+    $output .= '<span>Thu</span>';
+    $output .= '<span>Fri</span>';
+    $output .= '<span>Sat</span>';
+    $output .= '<span>Sun</span>';
+    $output .= '</div>';
     $output .= '<div class="automation-grid">';
+
+     $first_day_of_year = (int)$start->format('N'); 
+    // N = 1 (Mon) a 7 (Sun)
+
+    for ($i = 1; $i < $first_day_of_year; $i++) {
+        $output .= '<div class="day level-0 empty"></div>';
+    }
 
     // Reiniciar periodo
     $period = new DatePeriod($start, $interval, $end);
@@ -111,6 +129,7 @@ function automation_hours_shortcode() {
     $output .= '</div>';
     $output .= '</div>';
 
+    $output .= '</div>';
     return $output;
 }
 
@@ -195,6 +214,7 @@ function automation_sync_from_api() {
 
 }
 
+
 function automation_hours_styles() {
     echo '
     <style>
@@ -204,6 +224,24 @@ function automation_hours_styles() {
         overflow-x: auto;
         overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
+    }
+
+    .automation-container {
+        display: flex;
+        gap: 8px;
+        min-width: max-content;
+    }
+
+    .weekdays {
+        display: grid;
+        grid-template-rows: repeat(7, 14px);
+        font-size: 10px;
+        align-items: center;
+    }
+
+    .weekdays span {
+        height: 14px;
+        line-height: 14px;
     }
 
     .months-row {
@@ -230,12 +268,15 @@ function automation_hours_styles() {
         gap: 4px;
         min-width: max-content;
     }
+    
+    .empty {
+    visibility: hidden;
+    }
 
     .day {
         width: 14px;
         height: 14px;
         border-radius: 3px;
-        flex-shrink: 0;
     }
 
     .level-0 { background: #ebedf0; }

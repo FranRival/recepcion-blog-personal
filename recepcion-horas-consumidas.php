@@ -195,13 +195,15 @@ function automation_sync_from_api() {
 
 }
 
-
 function automation_hours_styles() {
     echo '
     <style>
 
     .automation-wrapper {
-        display: inline-block;
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
     }
 
     .months-row {
@@ -211,12 +213,14 @@ function automation_hours_styles() {
         gap: 4px;
         margin-bottom: 6px;
         font-size: 10px;
+        min-width: max-content;
     }
 
     .month-label {
         position: relative;
         transform: translateX(-4px);
         font-weight: bold;
+        white-space: nowrap;
     }
 
     .automation-grid {
@@ -224,12 +228,14 @@ function automation_hours_styles() {
         grid-template-rows: repeat(7, 14px);
         grid-auto-flow: column;
         gap: 4px;
+        min-width: max-content;
     }
 
     .day {
         width: 14px;
         height: 14px;
         border-radius: 3px;
+        flex-shrink: 0;
     }
 
     .level-0 { background: #ebedf0; }
@@ -240,32 +246,3 @@ function automation_hours_styles() {
     </style>
     ';
 }
-
-
-//automation_hours_shortcode() -
-/*
-Antes de cambiar la funcion:
-
-Usuario entra a la pagina > Wordpress llama a la API > Recibe JSON > lo convierte en array > Genera el HTML > lo guarda por 5 minutos
-
-
-- Depende del servidor externo
-- Dependiente del cache 
-- No persistente
-
-Ahora: 
-
-Cron (una vez al dia) > Wordpress llama a la API > Guarda datos en base de datos > Shortcode solo lee la base de datos
-
-- no depende de visitas
-- no satura la API
-- no depende de cache
-- permanencia de datos aunque el servidor se reinicie
-- arquitectura real de produccion 
-
-ANTES: Fronted hace llamadas externas en tiempo real
-AHORA: backend sincronizando datos una vez al dia. Y fronted leyendo base local
-
-
-133 - 134 - 15
-*/

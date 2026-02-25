@@ -154,7 +154,7 @@ function automation_sync_from_api() {
     global $wpdb;
 
     $table_name = $wpdb->prefix . 'automation_hours';
-    $api_url = 'https://overneatly-untarnished-lisa.ngrok-free.dev/api/hours';
+    $api_url = 'https://100.53.230.237:3000/api/hours';
 
     $response = wp_remote_get($api_url, array(
         'timeout' => 20,

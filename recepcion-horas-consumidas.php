@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.11.010
+Version: 1.11.20
 Author: Emmanuel
 */
 
@@ -192,8 +192,6 @@ function automation_sync_from_api() {
 
     $table_name = $wpdb->prefix . 'automation_hours';
     $api_url = 'https://api.emmanuelibarra.com/api/hours';
-	
-	error_log('Trying to reach API...');
 
     $response = wp_remote_get($api_url, array(
         'timeout' => 20,
@@ -203,21 +201,17 @@ function automation_sync_from_api() {
     ));
 
     if (is_wp_error($response)) {
-    die('WP ERROR: ' . $response->get_error_message());
-	}
+        error_log('WP ERROR: ' . $response->get_error_message());
+        return;
+    }
 
-	$status = wp_remote_retrieve_response_code($response);
-
-	if ($status !== 200) {
-		die('HTTP STATUS: ' . $status);
-	}
-
-	echo 'CONNECTION OK<br>';
-	echo wp_remote_retrieve_body($response);
-	exit;
+    $status = wp_remote_retrieve_response_code($response);
+    if ($status !== 200) {
+        error_log('HTTP STATUS: ' . $status);
+        return;
+    }
 
     $body = wp_remote_retrieve_body($response);
-    error_log('API RESPONSE: ' . $body);
     $data = json_decode($body, true);
 
     if (empty($data) || !is_array($data)) {
@@ -227,27 +221,16 @@ function automation_sync_from_api() {
     foreach ($data as $item) {
         if (isset($item['date'], $item['hours'])) {
 
-            $result = $wpdb->replace(
+            $wpdb->replace(
                 $table_name,
                 array(
-                    'date'  => sanitize_text_field($item['date']),
+                    'date'  => $item['date'],
                     'hours' => floatval($item['hours'])
                 ),
                 array('%s', '%f')
             );
-			if ($result === false) {
-				error_log('DB ERROR: ' . $wpdb->last_error);
-			} else {
-				error_log('Inserted: ' . $item['date']);
-			}
         }
-		
-		echo 'DB ERROR: ' . $wpdb->last_error;
-		exit;
     }
-	
-	
-
 }
 
 

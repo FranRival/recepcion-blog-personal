@@ -81,18 +81,17 @@ function automation_hours_shortcode($atts) {
 
     $interval = new DateInterval('P1D');
     $period = new DatePeriod($start, $interval, $end);
-
-    $week_index = 0;
-    $day_count = 0;
+   
+    $first_day_of_year = (int)$start->format('N');
+	$week_index = ceil(($first_day_of_year - 1) / 7);
+	$day_count = $first_day_of_year - 1;
 
     foreach ($period as $date_obj) {
 
         $day_of_month = $date_obj->format('j');
         $month_label = $date_obj->format('M');
 
-        if ($day_count % 7 == 0) {
-            $week_index++;
-        }
+        $week_index = floor($day_count / 7) + 1;
 
         if ($day_of_month == 1) {
             $output .= '<span class="month-label" style="grid-column:' . $week_index . ';">' . esc_html($month_label) . '</span>';

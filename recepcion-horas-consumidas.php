@@ -296,6 +296,7 @@ function automation_hours_styles() {
     }
 
     .months-row {
+		margin-left: 48px;
         display: grid;
         grid-auto-flow: column;
         grid-auto-columns: 14px;

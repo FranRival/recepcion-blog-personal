@@ -75,7 +75,9 @@ function automation_hours_shortcode($atts) {
 
     $output .= '<div class="months-row">';
 
+    
     $start = new DateTime($year . '-01-01');
+	$start->modify('monday this week');
     $end   = new DateTime($year . '-12-31');
     $end->modify('+1 day');
 
@@ -116,11 +118,7 @@ function automation_hours_shortcode($atts) {
     $output .= '<div class="automation-grid">';
 
     // Offset inicio año
-    $first_day_of_year = (int)$start->format('N'); // 1 (Mon) a 7 (Sun)
 
-    for ($i = 1; $i < $first_day_of_year; $i++) {
-        $output .= '<div class="day level-0 empty"></div>';
-    }
 
     // Reiniciar periodo
     $period = new DatePeriod($start, $interval, $end);

@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.11.011
+Version: 1.11.010
 Author: Emmanuel
 */
 
@@ -10,6 +10,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+add_action('init', function() {
+    if (isset($_GET['force_sync'])) {
+        automation_sync_from_api();
+        echo "Sync ejecutado";
+        exit;
+    }
+});
 
 
 function automation_hours_shortcode($atts) {
@@ -152,7 +159,7 @@ register_activation_hook(__FILE__, 'automation_schedule_daily_sync');
 
 function automation_schedule_daily_sync() {
     if (!wp_next_scheduled('automation_daily_sync')) {
-        wp_schedule_event(time(), 'daily', 'automation_daily_sync');
+        wp_schedule_event(time(), 'hourly', 'automation_daily_sync');
     }
 }
 
@@ -184,7 +191,9 @@ function automation_sync_from_api() {
     global $wpdb;
 
     $table_name = $wpdb->prefix . 'automation_hours';
-    $api_url = 'https://100.53.230.237:3000/api/hours';
+    $api_url = 'https://api.emmanuelibarra.com/api/hours';
+	
+	error_log('Trying to reach API...');
 
     $response = wp_remote_get($api_url, array(
         'timeout' => 20,
@@ -194,12 +203,18 @@ function automation_sync_from_api() {
     ));
 
     if (is_wp_error($response)) {
-        return;
-    }
+    die('WP ERROR: ' . $response->get_error_message());
+	}
 
-    if (wp_remote_retrieve_response_code($response) !== 200) {
-        return;
-    }
+	$status = wp_remote_retrieve_response_code($response);
+
+	if ($status !== 200) {
+		die('HTTP STATUS: ' . $status);
+	}
+
+	echo 'CONNECTION OK<br>';
+	echo wp_remote_retrieve_body($response);
+	exit;
 
     $body = wp_remote_retrieve_body($response);
     error_log('API RESPONSE: ' . $body);
@@ -212,7 +227,7 @@ function automation_sync_from_api() {
     foreach ($data as $item) {
         if (isset($item['date'], $item['hours'])) {
 
-            $wpdb->replace(
+            $result = $wpdb->replace(
                 $table_name,
                 array(
                     'date'  => sanitize_text_field($item['date']),
@@ -220,8 +235,18 @@ function automation_sync_from_api() {
                 ),
                 array('%s', '%f')
             );
+			if ($result === false) {
+				error_log('DB ERROR: ' . $wpdb->last_error);
+			} else {
+				error_log('Inserted: ' . $item['date']);
+			}
         }
+		
+		echo 'DB ERROR: ' . $wpdb->last_error;
+		exit;
     }
+	
+	
 
 }
 

@@ -24,7 +24,6 @@ function automation_hours_shortcode($atts) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'automation_hours';
 
-    // Año desde URL o actual
     $selected_year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 
     $atts = shortcode_atts(
@@ -36,7 +35,6 @@ function automation_hours_shortcode($atts) {
 
     $year = intval($atts['year']);
 
-    // Obtener datos
     $results = $wpdb->get_results(
         $wpdb->prepare(
             "SELECT date, hours FROM $table_name WHERE YEAR(date) = %d",
@@ -53,12 +51,9 @@ function automation_hours_shortcode($atts) {
     }
 
     $output = '';
-
-    // Selector de año
     $current_year = date('Y');
 
     $output .= '<div class="automation-wrapper">';
-    
     $output .= '<div class="automation-header">';
     $output .= '<form method="GET" class="year-selector">';
     $output .= '<select name="year" onchange="this.form.submit()">';
@@ -70,40 +65,55 @@ function automation_hours_shortcode($atts) {
 
     $output .= '</select>';
     $output .= '</form>';
-
     $output .= '</div>';
+
+    /*
+    ======================================================
+    CONFIGURACIÓN CALENDARIO BASE (LÓGICA TIPO GITHUB)
+    ======================================================
+    */
+
+    $year_start = new DateTime($year . '-01-01');
+    $calendar_start = clone $year_start;
+    $calendar_start->modify('monday this week');
+
+    $year_end = new DateTime($year . '-12-31');
+    $calendar_end = clone $year_end;
+    $calendar_end->modify('sunday this week');
+    $calendar_end->modify('+1 day');
+
+    $interval = new DateInterval('P1D');
+    $period = new DatePeriod($calendar_start, $interval, $calendar_end);
+
+    /*
+    ======================================================
+    MESES (ALINEACIÓN CORRECTA)
+    ======================================================
+    */
 
     $output .= '<div class="months-row">';
 
-    
-    $start = new DateTime($year . '-01-01');
-	$start->modify('monday this week');
-    $end   = new DateTime($year . '-12-31');
-    $end->modify('+1 day');
-
-    $interval = new DateInterval('P1D');
-    $period = new DatePeriod($start, $interval, $end);
-   
-    $first_day_of_year = (int)$start->format('N');
-	$week_index = ceil(($first_day_of_year - 1) / 7);
-	$day_count = $first_day_of_year - 1;
-
     foreach ($period as $date_obj) {
 
-        $day_of_month = $date_obj->format('j');
-        $month_label = $date_obj->format('M');
+        if ($date_obj->format('j') == 1) {
 
-        $week_index = floor($day_count / 7) + 1;
+            $diff_days = $calendar_start->diff($date_obj)->days;
+            $column = floor($diff_days / 7) + 1;
 
-        if ($day_of_month == 1) {
-            $output .= '<span class="month-label" style="grid-column:' . $week_index . ';">' . esc_html($month_label) . '</span>';
+            $output .= '<span class="month-label" style="grid-column:' . $column . ';">'
+                . esc_html($date_obj->format('M')) .
+                '</span>';
         }
-
-        $day_count++;
     }
 
     $output .= '</div>';
     $output .= '<div class="automation-container">';
+
+    /*
+    ======================================================
+    WEEKDAYS
+    ======================================================
+    */
 
     $output .= '<div class="weekdays">';
     $output .= '<span>Mon</span>';
@@ -115,17 +125,26 @@ function automation_hours_shortcode($atts) {
     $output .= '<span>Sun</span>';
     $output .= '</div>';
 
+    /*
+    ======================================================
+    GRID
+    ======================================================
+    */
+
     $output .= '<div class="automation-grid">';
 
-    // Offset inicio año
-
-
-    // Reiniciar periodo
-    $period = new DatePeriod($start, $interval, $end);
+    $period = new DatePeriod($calendar_start, $interval, $calendar_end);
 
     foreach ($period as $date_obj) {
 
         $date = $date_obj->format('Y-m-d');
+
+        // No pintar días fuera del año
+        if ($date_obj < $year_start || $date_obj > $year_end) {
+            $output .= '<div class="day level-0 empty"></div>';
+            continue;
+        }
+
         $hours = isset($hours_by_date[$date]) ? (float)$hours_by_date[$date] : 0.0;
 
         if ($hours === 0.0) {
@@ -138,7 +157,8 @@ function automation_hours_shortcode($atts) {
             $level = 'level-3';
         }
 
-        $output .= '<div class="day ' . esc_attr($level) . '" title="' . esc_attr($date . ' - ' . $hours . 'h') . '"></div>';
+        $output .= '<div class="day ' . esc_attr($level) . '" title="' 
+            . esc_attr($date . ' - ' . $hours . 'h') . '"></div>';
     }
 
     $output .= '</div>'; // grid

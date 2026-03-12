@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.11.20
+Version: 1.11.30
 Author: Emmanuel
 */
 
@@ -54,7 +54,10 @@ function automation_hours_shortcode($atts) {
     $current_year = date('Y');
 
     $output .= '<div class="automation-wrapper">';
+    $output .= '<div class="automation-card">';
     $output .= '<div class="automation-header">';
+    $output .= '<div class="header-controls">';
+
     $output .= '<form method="GET" class="year-selector">';
     $output .= '<select name="year" onchange="this.form.submit()">';
 
@@ -65,6 +68,10 @@ function automation_hours_shortcode($atts) {
 
     $output .= '</select>';
     $output .= '</form>';
+
+    $output .= '<a class="automation-stats-link" href="/estadisticas">Ver estadísticas</a>';
+
+    $output .= '</div>';
     $output .= '</div>';
 
     /*
@@ -163,6 +170,17 @@ function automation_hours_shortcode($atts) {
 
     $output .= '</div>'; // grid
     $output .= '</div>'; // container
+
+    $output .= '<div class="automation-legend">';
+    $output .= '<span class="legend-text">Less</span>';
+    $output .= '<span class="legend-box level-0"></span>';
+    $output .= '<span class="legend-box level-1"></span>';
+    $output .= '<span class="legend-box level-2"></span>';
+    $output .= '<span class="legend-box level-3"></span>';
+    $output .= '<span class="legend-text">More</span>';
+    $output .= '</div>';
+
+    $output .= '</div>'; // card
     $output .= '</div>'; // wrapper
 
     return $output;
@@ -257,7 +275,7 @@ function automation_hours_styles() {
 
     .automation-header {
         display: flex;
-        justify-content: flex-end;
+        justify-content: center;
         margin-bottom: 8px;
     }
 
@@ -272,9 +290,6 @@ function automation_hours_styles() {
 
     .automation-wrapper {
         width: 100%;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
     }
 
     .automation-container {
@@ -336,6 +351,84 @@ function automation_hours_styles() {
     .level-2 { background: #40c463; }
     .level-3 { background: #216e39; }
 
+
+    .header-controls {
+        display:flex;
+        align-items:center;
+        gap:10px;
+    }
+
+    .automation-stats-link {
+        font-size:11px;
+        color:#0969da;
+        text-decoration:none;
+    }
+
+    .automation-stats-link:hover {
+        text-decoration:underline;
+    }
+
+    .automation-card{
+        border:1px solid #d0d7de;
+        border-radius:6px;
+        padding:16px;
+        background:#ffffff;
+
+        overflow-x:auto;
+        overflow-y:hidden;  
+    }
+
+    .automation-wrapper::-webkit-scrollbar {
+        height:8px;
+    }
+
+    .automation-wrapper::-webkit-scrollbar-thumb {
+        background:#c9d1d9;
+        border-radius:4px;
+    }
+
+    .automation-wrapper::-webkit-scrollbar-track {
+        background:transparent;
+    }
+
+    .automation-legend{
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap:4px;
+        margin-top:8px;
+        font-size:10px;
+    }
+
+    .legend-box{
+        width:12px;
+        height:12px;
+        border-radius:2px;
+    }
+
+    .legend-text{
+        margin:0 4px;
+    }
+
+    .automation-card{
+        border:1px solid #d0d7de;
+        border-radius:6px;
+        padding:16px;
+        background:#ffffff;
+        max-width:100%;
+    }
+
     </style>
     ';
 }
+
+
+/*
+CAMBIOS
+1. 
+2. Enviar a una pagina de estadisticas. 
+3. Mostrar la fecha y la cantidad de horas al colocar el curso sobre los cuadros. Informacion de: horas. Cantidad de Scripts trabajando. 
+4. 
+5. 
+6. Cantidad de horas automatizadas en la esquina superior izqueirda. 
+*/

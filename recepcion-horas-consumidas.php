@@ -50,12 +50,21 @@ function automation_hours_shortcode($atts) {
         }
     }
 
+    $total_hours = 0;
+
+    foreach ($hours_by_date as $h) {
+        $total_hours += $h;
+    }
+
     $output = '';
     $current_year = date('Y');
 
     $output .= '<div class="automation-wrapper">';
     $output .= '<div class="automation-card">';
     $output .= '<div class="automation-header">';
+    $output .= '<div class="automation-total-hours">';
+    $output .= number_format($total_hours, 1) . ' automation hours';
+    $output .= '</div>';
     $output .= '<div class="header-controls">';
 
     $output .= '<form method="GET" class="year-selector">';
@@ -274,9 +283,10 @@ function automation_hours_styles() {
     <style>
 
     .automation-header {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 8px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        margin-bottom: 12px;
     }
 
     .year-selector select {
@@ -353,6 +363,7 @@ function automation_hours_styles() {
 
 
     .header-controls {
+        justify-self:center;
         display:flex;
         align-items:center;
         gap:10px;
@@ -417,6 +428,12 @@ function automation_hours_styles() {
         background:#ffffff;
         max-width:100%;
     }
+        .automation-total-hours{
+        justify-self:start;
+        font-size:13px;
+        font-weight:600;
+        color:#24292f;
+    }
 
     </style>
     ';
@@ -430,5 +447,5 @@ CAMBIOS
 3. Mostrar la fecha y la cantidad de horas al colocar el curso sobre los cuadros. Informacion de: horas. Cantidad de Scripts trabajando. 
 4. 
 5. 
-6. Cantidad de horas automatizadas en la esquina superior izqueirda. 
+6.
 */

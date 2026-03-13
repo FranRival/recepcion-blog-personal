@@ -58,6 +58,7 @@ function automation_hours_shortcode($atts) {
 
     $output = '';
     $current_year = date('Y');
+    $first_year = 2026;
 
     $output .= '<div class="automation-wrapper">';
     $output .= '<div class="automation-card">';
@@ -70,7 +71,7 @@ function automation_hours_shortcode($atts) {
     $output .= '<form method="GET" class="year-selector">';
     $output .= '<select name="year" onchange="this.form.submit()">';
 
-    for ($y = $current_year; $y >= $current_year - 5; $y--) {
+    for ($y = $current_year; $y >= $current_year; $y--) {
         $selected = ($y == $year) ? 'selected' : '';
         $output .= "<option value='{$y}' {$selected}>{$y}</option>";
     }
@@ -81,6 +82,9 @@ function automation_hours_shortcode($atts) {
     $output .= '<a class="automation-stats-link" href="/estadisticas">Ver estadísticas</a>';
 
     $output .= '</div>';
+    
+    $output .= '<a href="/estadisticas?year=' . $year . '" class="stats-link">Estadísticas</a>';
+    
     $output .= '</div>';
 
     /*
@@ -281,6 +285,20 @@ function automation_sync_from_api() {
 function automation_hours_styles() {
     echo '
     <style>
+    
+    .stats-link{
+    font-size:11px;
+    padding:3px 6px;
+    margin-left:8px;
+    border-radius:4px;
+    background:#f3f4f6;
+    text-decoration:none;
+    color:#111;
+}
+
+.	stats-link:hover{
+    background:#e5e7eb;
+}
 
     .automation-header {
         display: grid;

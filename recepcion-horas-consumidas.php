@@ -173,10 +173,12 @@ function automation_hours_shortcode($atts) {
             $level = 'level-3';
         }
 
-        $output .= '<div class="day ' . esc_attr($level) . '" title="' 
-            . esc_attr($date . ' - ' . $hours . 'h') . '"></div>';
+        $output .= '<div class="day ' . esc_attr($level) . '" 
+    data-date="' . esc_attr($date) . '" 
+    data-hours="' . esc_attr($hours) . '"></div>';
     }
 
+    $output .= '<div id="automation-tooltip"></div>';
     $output .= '</div>'; // grid
     $output .= '</div>'; // container
 
@@ -435,8 +437,71 @@ function automation_hours_styles() {
         color:#24292f;
     }
 
+    #automation-tooltip{
+        position:absolute;
+        background:#24292f;
+        color:#fff;
+        font-size:11px;
+        padding:6px 8px;
+        border-radius:6px;
+        pointer-events:none;
+        opacity:0;
+        transform:translate(-50%,-120%);
+        white-space:nowrap;
+        z-index:9999;
+        transition:opacity .15s ease;
+    }
+
     </style>
     ';
+}
+
+add_action('wp_footer','automation_hours_script');
+
+function automation_hours_script(){
+?>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const tooltip = document.getElementById("automation-tooltip");
+
+    document.querySelectorAll(".automation-grid .day").forEach(function(el){
+
+        el.addEventListener("mouseenter", function(e){
+
+            const date = this.dataset.date;
+            const hours = this.dataset.hours;
+
+            if(!date) return;
+
+            tooltip.innerHTML = date + " — " + hours + " hours";
+
+            tooltip.style.opacity = 1;
+
+        });
+
+        el.addEventListener("mousemove", function(e){
+
+            tooltip.style.left = e.pageX + "px";
+            tooltip.style.top = e.pageY + "px";
+
+        });
+
+        el.addEventListener("mouseleave", function(){
+
+            tooltip.style.opacity = 0;
+
+        });
+
+    });
+
+});
+
+</script>
+
+<?php
 }
 
 

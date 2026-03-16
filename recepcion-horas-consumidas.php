@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.11.30
+Version: 1.11.56
 Author: Emmanuel
 */
 
@@ -452,6 +452,27 @@ function automation_hours_styles() {
         transition:opacity .15s ease;
     }
 
+    .day.active{
+        position:relative;
+        transform:scale(3);
+        z-index:20;
+        box-shadow:0 2px 6px rgba(0,0,0,.2);
+    }
+
+    .day.active::after{
+        content:attr(data-date) " — " attr(data-hours) "h";
+        position:absolute;
+        top:18px;
+        left:50%;
+        transform:translateX(-50%);
+        background:#24292f;
+        color:#fff;
+        font-size:10px;
+        padding:4px 6px;
+        border-radius:4px;
+        white-space:nowrap;
+    }
+
     </style>
     ';
 }
@@ -463,41 +484,31 @@ function automation_hours_script(){
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function(){
+    document.addEventListener("DOMContentLoaded", function(){
 
-    const tooltip = document.getElementById("automation-tooltip");
+        const days = document.querySelectorAll(".automation-grid .day");
 
-    document.querySelectorAll(".automation-grid .day").forEach(function(el){
+        days.forEach(function(el){
 
-        el.addEventListener("mouseenter", function(e){
+            el.addEventListener("click", function(e){
 
-            const date = this.dataset.date;
-            const hours = this.dataset.hours;
+                e.stopPropagation();
 
-            if(!date) return;
+                days.forEach(d => d.classList.remove("active"));
 
-            tooltip.innerHTML = date + " — " + hours + " hours";
+                if(!this.dataset.date) return;
 
-            tooltip.style.opacity = 1;
+                this.classList.add("active");
 
-        });
-
-        el.addEventListener("mousemove", function(e){
-
-            tooltip.style.left = e.pageX + "px";
-            tooltip.style.top = e.pageY + "px";
+            });
 
         });
 
-        el.addEventListener("mouseleave", function(){
-
-            tooltip.style.opacity = 0;
-
+        document.addEventListener("click", function(){
+            days.forEach(d => d.classList.remove("active"));
         });
 
     });
-
-});
 
 </script>
 

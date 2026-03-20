@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.11.56
+Version: 1.11.58
 Author: Emmanuel
 */
 
@@ -163,14 +163,23 @@ function automation_hours_shortcode($atts) {
 
         $hours = isset($hours_by_date[$date]) ? (float)$hours_by_date[$date] : 0.0;
 
+        $max_hours = 23.3;
+
         if ($hours === 0.0) {
             $level = 'level-0';
-        } elseif ($hours < 2) {
-            $level = 'level-1';
-        } elseif ($hours < 4) {
-            $level = 'level-2';
         } else {
-            $level = 'level-3';
+
+            $ratio = $hours / $max_hours;
+
+            if ($ratio <= 0.25) {
+                $level = 'level-1';
+            } elseif ($ratio <= 0.5) {
+                $level = 'level-2';
+            } elseif ($ratio <= 0.75) {
+                $level = 'level-3';
+            } else {
+                $level = 'level-4'; // NUEVO nivel máximo
+            }
         }
 
         $output .= '<div class="day ' . esc_attr($level) . '" 
@@ -188,6 +197,7 @@ function automation_hours_shortcode($atts) {
     $output .= '<span class="legend-box level-1"></span>';
     $output .= '<span class="legend-box level-2"></span>';
     $output .= '<span class="legend-box level-3"></span>';
+    $output .= '<span class="legend-box level-4"></span>';
     $output .= '<span class="legend-text">More</span>';
     $output .= '</div>';
 
@@ -362,6 +372,7 @@ function automation_hours_styles() {
     .level-1 { background: #9be9a8; }
     .level-2 { background: #40c463; }
     .level-3 { background: #216e39; }
+    .level-4 { background: #0e4429; } /* verde más intenso */
 
 
     .header-controls {

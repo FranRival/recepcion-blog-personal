@@ -50,14 +50,7 @@ function automation_hours_shortcode($atts) {
         }
     }
 
-    $status_by_date = array(
-        "2026-03-25" => "error",
-        "2026-03-26" => "error",
-        "2026-03-27" => "error",
-        "2026-03-28" => "error",
-        "2026-03-29" => "error",
-        "2026-03-30" => "error",
-    );
+    
 
     $total_hours = 0;
 
@@ -150,62 +143,111 @@ function automation_hours_shortcode($atts) {
     $output .= '<span>Sun</span>';
     $output .= '</div>';
 
+    
+
+    /*
+======================================================
+GRID
+======================================================
+*/
+
+$output .= '<div class="automation-grid">';
+
+$period = new DatePeriod($calendar_start, $interval, $calendar_end);
+
+/*
+======================================================
+🧠 NUEVO: CONSUMIR STATUS DESDE AWS (/api/status)
+- Eliminamos el hardcode manual
+- Ahora el backend decide qué día es error
+- Esto convierte el sistema en automático
+======================================================
+*/
+
+$status_by_date = array();
+
+$response = wp_remote_get('https://api.emmanuelibarra.com/api/status');
+
+if (!is_wp_error($response)) {
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+
+    if (is_array($data)) {
+        $status_by_date = $data;
+    }
+}
+
+/*
+======================================================
+RENDER DEL GRID
+======================================================
+*/
+
+foreach ($period as $date_obj) {
+
+    $date = $date_obj->format('Y-m-d');
+
     /*
     ======================================================
-    GRID
+    🔴 PRIORIDAD 1: ERROR DEL SISTEMA (DESDE API)
+    - Si backend marca error → SIEMPRE rojo
+    - Ignora completamente las horas
     ======================================================
     */
-
-    $output .= '<div class="automation-grid">';
-
-    $period = new DatePeriod($calendar_start, $interval, $calendar_end);
-
-    foreach ($period as $date_obj) {
-
-        $date = $date_obj->format('Y-m-d');
-
-        if (isset($status_by_date[$date]) && $status_by_date[$date] === 'error') {
-            $output .= '<div class="day level-error" 
-                data-date="' . esc_attr($date) . '" 
-                data-hours="0"></div>';
-            continue;
-        }
-
-        // No pintar días fuera del año
-        if ($date_obj < $year_start || $date_obj > $year_end) {
-            $output .= '<div class="day level-0 empty"></div>';
-            continue;
-        }
-
-        $hours = isset($hours_by_date[$date]) ? (float)$hours_by_date[$date] : 0.0;
-
-        $max_hours = 23.3;
-
-        if ($hours === 0.0) {
-            $level = 'level-0';
-        } else {
-
-            $ratio = $hours / $max_hours;
-
-            if ($ratio <= 0.25) {
-                $level = 'level-1';
-            } elseif ($ratio <= 0.5) {
-                $level = 'level-2';
-            } elseif ($ratio <= 0.75) {
-                $level = 'level-3';
-            } else {
-                $level = 'level-4'; // NUEVO nivel máximo
-            }
-        }
-
-        $output .= '<div class="day ' . esc_attr($level) . '" 
-    data-date="' . esc_attr($date) . '" 
-    data-hours="' . esc_attr($hours) . '"></div>';
+    if (isset($status_by_date[$date]) && $status_by_date[$date]['status'] === 'error') {
+        $output .= '<div class="day level-error" 
+            data-date="' . esc_attr($date) . '" 
+            data-hours="error"></div>';
+        continue;
     }
 
-    $output .= '<div id="automation-tooltip"></div>';
-    $output .= '</div>'; // grid
-    $output .= '</div>'; // container
+    /*
+    ======================================================
+    NO pintar días fuera del año
+    ======================================================
+    */
+    if ($date_obj < $year_start || $date_obj > $year_end) {
+        $output .= '<div class="day level-0 empty"></div>';
+        continue;
+    }
+
+    /*
+    ======================================================
+    🟢 LÓGICA NORMAL (HORAS)
+    ======================================================
+    */
+    $hours = isset($hours_by_date[$date]) ? (float)$hours_by_date[$date] : 0.0;
+
+    $max_hours = 23.3;
+
+    if ($hours === 0.0) {
+        $level = 'level-0';
+    } else {
+
+        $ratio = $hours / $max_hours;
+
+        if ($ratio <= 0.25) {
+            $level = 'level-1';
+        } elseif ($ratio <= 0.5) {
+            $level = 'level-2';
+        } elseif ($ratio <= 0.75) {
+            $level = 'level-3';
+        } else {
+            $level = 'level-4';
+        }
+    }
+
+    $output .= '<div class="day ' . esc_attr($level) . '" 
+        data-date="' . esc_attr($date) . '" 
+        data-hours="' . esc_attr($hours) . '"></div>';
+}
+
+$output .= '<div id="automation-tooltip"></div>';
+$output .= '</div>'; // grid
+
+
+
+
 
     $output .= '<div class="automation-legend">';
     $output .= '<span class="legend-text">Less</span>';

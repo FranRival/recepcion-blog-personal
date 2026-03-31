@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.12.00
+Version: 1.12.01
 Author: Emmanuel
 */
 
@@ -209,11 +209,16 @@ function automation_hours_shortcode($atts) {
 
     $output .= '<div class="automation-legend">';
     $output .= '<span class="legend-text">Less</span>';
+
     $output .= '<span class="legend-box level-0"></span>';
     $output .= '<span class="legend-box level-1"></span>';
     $output .= '<span class="legend-box level-2"></span>';
     $output .= '<span class="legend-box level-3"></span>';
     $output .= '<span class="legend-box level-4"></span>';
+
+    $output .= '<span class="legend-box level-error"></span>';
+    $output .= '<span class="legend-text">API Error</span>';
+
     $output .= '<span class="legend-text">More</span>';
     $output .= '</div>';
 

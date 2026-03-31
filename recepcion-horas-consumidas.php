@@ -596,10 +596,14 @@ function automation_hours_script(){
 
 /*
 CAMBIOS
-1. 
-2. Enviar a una pagina de estadisticas. 
-3. Mostrar la fecha y la cantidad de horas al colocar el curso sobre los cuadros. Informacion de: horas. Cantidad de Scripts trabajando. 
-4. 
-5. 
-6. Cantidad de horas automatizadas en la esquina superior izqueirda. 
+los datos del 24 al 30 de marzo estaban alojados en el plugin.
+
+Ahora: el plugin detecta 6 dias sin datos = error. 
+Es decir, genera esto: "2026-03-25": { "status": "error" }
+
+el color rojo depende de la ausencia de datos. Se estan calculando en vivo.
+
+Es decir, si manana llegan datos nuevos, los colores rojos desapareceran. Sin limpiar manualmente. Se sistema se vuelve autosuficiente.
+
+Se hizo esto: estado = funcion(datos) y dejamos esto atras: estado = dato guardado
 */

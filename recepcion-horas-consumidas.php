@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.11.58
+Version: 1.12.00
 Author: Emmanuel
 */
 
@@ -49,6 +49,15 @@ function automation_hours_shortcode($atts) {
             $hours_by_date[$row['date']] = $row['hours'];
         }
     }
+
+    $status_by_date = array(
+        "2026-03-25" => "error",
+        "2026-03-26" => "error",
+        "2026-03-27" => "error",
+        "2026-03-28" => "error",
+        "2026-03-29" => "error",
+        "2026-03-30" => "error",
+    );
 
     $total_hours = 0;
 
@@ -154,6 +163,13 @@ function automation_hours_shortcode($atts) {
     foreach ($period as $date_obj) {
 
         $date = $date_obj->format('Y-m-d');
+
+        if (isset($status_by_date[$date]) && $status_by_date[$date] === 'error') {
+            $output .= '<div class="day level-error" 
+                data-date="' . esc_attr($date) . '" 
+                data-hours="0"></div>';
+            continue;
+        }
 
         // No pintar días fuera del año
         if ($date_obj < $year_start || $date_obj > $year_end) {
@@ -482,6 +498,10 @@ function automation_hours_styles() {
         padding:4px 6px;
         border-radius:4px;
         white-space:nowrap;
+    }
+
+    .level-error {
+        background: #ff4d4f;
     }
 
     </style>

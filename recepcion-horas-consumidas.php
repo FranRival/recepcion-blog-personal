@@ -534,7 +534,7 @@ function automation_hours_styles() {
     }
 
     .day.active::after{
-        content:attr(data-date) " — " attr(data-hours) "h";
+        content:attr(data-date) " — " attr(data-hours);
         position:absolute;
         top:18px;
         left:50%;

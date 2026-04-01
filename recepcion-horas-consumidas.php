@@ -244,6 +244,7 @@ foreach ($period as $date_obj) {
 
 $output .= '<div id="automation-tooltip"></div>';
 $output .= '</div>'; // grid
+$output .= '</div>'; //
 
 
 

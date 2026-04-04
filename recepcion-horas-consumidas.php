@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.12.01
+Version: 1.13.00
 Author: Emmanuel
 */
 

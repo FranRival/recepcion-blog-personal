@@ -194,10 +194,33 @@ foreach ($period as $date_obj) {
     - Ignora completamente las horas
     ======================================================
     */
+    /*5 tipos de datos: DNS Error, No data, error, timeout, api down */
     if (isset($status_by_date[$date]) && $status_by_date[$date]['status'] === 'error') {
+
+        $type = $status_by_date[$date]['type'] ?? 'error';
+
+        // 🔥 MAPEO HUMANO
+        switch ($type) {
+            case 'ECONNREFUSED':
+                $label = 'API Down';
+                break;
+            case 'ETIMEDOUT':
+                $label = 'Timeout';
+                break;
+            case 'ENOTFOUND':
+                $label = 'DNS Error';
+                break;
+            case 'no_data':
+                $label = 'No Data';
+                break;
+            default:
+                $label = 'Error';
+        }
+
         $output .= '<div class="day level-error" 
             data-date="' . esc_attr($date) . '" 
-            data-hours="error"></div>';
+            data-hours="' . esc_attr($label) . '"></div>';
+
         continue;
     }
 
@@ -239,7 +262,7 @@ foreach ($period as $date_obj) {
 
     $output .= '<div class="day ' . esc_attr($level) . '" 
         data-date="' . esc_attr($date) . '" 
-        data-hours="' . esc_attr($hours) . '"></div>';
+        data-hours="' . esc_attr($hours . ' hrs') . '"></div>';
 }
 
 $output .= '<div id="automation-tooltip"></div>';

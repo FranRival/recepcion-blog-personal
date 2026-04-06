@@ -623,12 +623,38 @@ function automation_hours_styles() {
     }
 
     .stats-box {
-
-        color: #fff;
+        color: #000000;
         padding: 20px;
         border-radius: 10px;
         font-size: 16px;
-    }   
+    }
+
+    .stats-weekly {
+        margin-top: 30px;
+    }
+
+    .week-row {
+        display: grid;
+        grid-template-columns: 80px 1fr 50px;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+        font-size: 12px;
+    }
+
+    .week-bar {
+        background: #eee;
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .week-fill {
+        background: #2da44e;
+        height: 100%;
+        border-radius: 5px;
+        transition: width 0.3s ease;
+    }
 
     </style>
     ';
@@ -665,6 +691,31 @@ function automation_stats_shortcode() {
     $min = ['date' => '', 'hours' => 999];
 
     foreach ($results as $row) {
+
+        $weekly = [];
+
+    foreach ($results as $row) {
+
+        $date = $row['date'];
+        $hours = floatval($row['hours']);
+
+        if ($hours <= 0) continue;
+
+        $week = date('o-W', strtotime($date)); // año-semana ISO
+
+        if (!isset($weekly[$week])) {
+            $weekly[$week] = 0;
+        }
+
+        $weekly[$week] += $hours;
+
+        // lo que ya tenías:
+        $total += $hours;
+        $days++;
+
+        if ($hours > $max['hours']) $max = $row;
+        if ($hours < $min['hours']) $min = $row;
+    }
         $hours = floatval($row['hours']);
 
         if ($hours <= 0) continue;
@@ -685,6 +736,33 @@ function automation_stats_shortcode() {
 
     ob_start();
     ?>
+
+
+    <div class="stats-weekly">
+
+        <h3>Horas por semana</h3>
+
+        <?php 
+        $max_week = max($weekly); // para escalar barras
+
+        foreach ($weekly as $week => $hours):
+
+            $percent = ($hours / $max_week) * 100;
+        ?>
+
+            <div class="week-row">
+                <span class="week-label"><?php echo $week; ?></span>
+
+                <div class="week-bar">
+                    <div class="week-fill" style="width: <?php echo $percent; ?>%"></div>
+                </div>
+
+                <span class="week-hours"><?php echo round($hours,1); ?>h</span>
+            </div>
+
+        <?php endforeach; ?>
+
+    </div>
 
     <div class="stats-container">
 

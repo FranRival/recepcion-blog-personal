@@ -186,6 +186,8 @@ RENDER DEL GRID
 foreach ($period as $date_obj) {
 
     $date = $date_obj->format('Y-m-d');
+    $today = date('Y-m-d');
+    $is_today = ($date === $today);
 
     /*
     ======================================================
@@ -260,7 +262,8 @@ foreach ($period as $date_obj) {
         }
     }
 
-    $output .= '<div class="day ' . esc_attr($level) . '" 
+    $today_class = $is_today ? ' today' : '';
+    $output .= '<div class="day ' . esc_attr($level . $today_class) . '"  
         data-date="' . esc_attr($date) . '" 
         data-hours="' . esc_attr($hours . ' hrs') . '"></div>';
 }
@@ -573,6 +576,26 @@ function automation_hours_styles() {
 
     .level-error {
         background: #ff4d4f;
+    }
+
+    .today {
+        position: relative;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(0,0,0,0.2);
+        }
+        50% {
+            transform: scale(1.3);
+            box-shadow: 0 0 8px 2px rgba(0,0,0,0.25);
+        }
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(0,0,0,0.2);
+        }
     }
 
     </style>

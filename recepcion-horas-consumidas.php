@@ -183,11 +183,15 @@ RENDER DEL GRID
 ======================================================
 */
 
+
+$today = date('Y-m-d');
+
+
 foreach ($period as $date_obj) {
 
     $date = $date_obj->format('Y-m-d');
-    $today = date('Y-m-d');
-    $is_today = ($date === $today);
+    
+    
 
     /*
     ======================================================
@@ -197,6 +201,9 @@ foreach ($period as $date_obj) {
     ======================================================
     */
     /*5 tipos de datos: DNS Error, No data, error, timeout, api down */
+    $is_today = ($date === $today);
+    $today_class = $is_today ? ' today' : '';
+
     if (isset($status_by_date[$date]) && $status_by_date[$date]['status'] === 'error') {
 
         $type = $status_by_date[$date]['type'] ?? 'error';
@@ -219,7 +226,7 @@ foreach ($period as $date_obj) {
                 $label = 'Error';
         }
 
-        $output .= '<div class="day level-error" 
+        $output .= '<div class="day level-error' . esc_attr($today_class) . '" 
             data-date="' . esc_attr($date) . '" 
             data-hours="' . esc_attr($label) . '"></div>';
 
@@ -262,7 +269,7 @@ foreach ($period as $date_obj) {
         }
     }
 
-    $today_class = $is_today ? ' today' : '';
+    
     $output .= '<div class="day ' . esc_attr($level . $today_class) . '"  
         data-date="' . esc_attr($date) . '" 
         data-hours="' . esc_attr($hours . ' hrs') . '"></div>';
@@ -580,7 +587,9 @@ function automation_hours_styles() {
 
     .today {
         position: relative;
-        animation: pulse 1.5s infinite;
+        transform-box: fill-box;
+        transform-origin: center center;
+        animation: pulse 1.5s ease-in-out infinite;
     }
 
     @keyframes pulse {
@@ -597,6 +606,10 @@ function automation_hours_styles() {
             box-shadow: 0 0 0 0 rgba(0,0,0,0.2);
         }
     }
+
+    .day.today.active {
+        animation-play-state: paused;
+    }    
 
     </style>
     ';

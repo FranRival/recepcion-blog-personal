@@ -53,6 +53,7 @@ function automation_hours_shortcode($atts) {
     
 
     $total_hours = 0;
+    
 
     foreach ($hours_by_date as $h) {
         $total_hours += $h;
@@ -183,16 +184,31 @@ RENDER DEL GRID
 ======================================================
 */
 
-
+$system_start_date = '2026-03-02';
 $today = date('Y-m-d');
 
 
 foreach ($period as $date_obj) {
 
     $date = $date_obj->format('Y-m-d');
-    
-    
+    $is_today = ($date === $today);
+    $today_class = $is_today ? ' today' : '';
 
+    // Días de padding del calendario (fuera del año) → invisibles
+    if ($date_obj < $year_start || $date_obj > $year_end) {
+        $output .= '<div class="day level-0 empty"></div>';
+        continue;
+    }
+
+    // Días antes del sistema → gris normal, visibles
+    if ($date < $system_start_date) {
+        $output .= '<div class="day level-0" 
+            data-date="' . esc_attr($date) . '" 
+            data-hours="No data"></div>';
+        continue;
+    }
+    
+    
     /*
     ======================================================
     🔴 PRIORIDAD 1: ERROR DEL SISTEMA (DESDE API)
@@ -201,8 +217,7 @@ foreach ($period as $date_obj) {
     ======================================================
     */
     /*5 tipos de datos: DNS Error, No data, error, timeout, api down */
-    $is_today = ($date === $today);
-    $today_class = $is_today ? ' today' : '';
+    
 
     if (isset($status_by_date[$date]) && $status_by_date[$date]['status'] === 'error') {
 
@@ -232,6 +247,10 @@ foreach ($period as $date_obj) {
 
         continue;
     }
+
+        $output .= '<div class="day ' . esc_attr($level . $today_class) . '"  
+        data-date="' . esc_attr($date) . '" 
+        data-hours="' . esc_attr($hours . ' hrs') . '"></div>';
 
     /*
     ======================================================
@@ -270,9 +289,7 @@ foreach ($period as $date_obj) {
     }
 
     
-    $output .= '<div class="day ' . esc_attr($level . $today_class) . '"  
-        data-date="' . esc_attr($date) . '" 
-        data-hours="' . esc_attr($hours . ' hrs') . '"></div>';
+
 }
 
 $output .= '<div id="automation-tooltip"></div>';
@@ -586,25 +603,14 @@ function automation_hours_styles() {
     }
 
     .today {
-        position: relative;
-        transform-box: fill-box;
-        transform-origin: center center;
+        transform-origin: 50% 50%;
         animation: pulse 1.5s ease-in-out infinite;
     }
 
     @keyframes pulse {
-        0% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(0,0,0,0.2);
-        }
-        50% {
-            transform: scale(1.3);
-            box-shadow: 0 0 8px 2px rgba(0,0,0,0.25);
-        }
-        100% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(0,0,0,0.2);
-        }
+        0%   { transform: scale(1);   opacity: 1;   }
+        50%  { transform: scale(1.4); opacity: 0.7; }
+        100% { transform: scale(1);   opacity: 1;   }
     }
 
     .day.today.active {
@@ -655,6 +661,7 @@ function automation_hours_script(){
 
 
 /*
+fechas: del 19 al 28 de febrero, la api no existia
 CAMBIOS
 los datos del 24 al 30 de marzo estaban alojados en el plugin.
 

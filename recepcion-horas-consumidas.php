@@ -2,7 +2,7 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.13.00
+Version: 1.15.00
 Author: Emmanuel
 */
 
@@ -615,13 +615,98 @@ function automation_hours_styles() {
 
     .day.today.active {
         animation-play-state: paused;
-    }    
+    }   
+  
+    .stats-container {
+        max-width: 800px;
+        margin: 40px auto;
+    }
+
+    .stats-box {
+
+        color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        font-size: 16px;
+    }   
 
     </style>
     ';
 }
 
 add_action('wp_footer','automation_hours_script');
+
+
+
+
+// Estadísticas detalladas (total, promedio, días activos, máximo, mínimo) - funcion nueva
+function automation_stats_shortcode() {
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'automation_hours';
+
+    $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
+
+    $results = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT date, hours FROM $table_name WHERE YEAR(date) = %d",
+            $year
+        ),
+        ARRAY_A
+    );
+
+    if (empty($results)) {
+        return '<p>No hay datos.</p>';
+    }
+
+    $total = 0;
+    $days = 0;
+    $max = ['date' => '', 'hours' => 0];
+    $min = ['date' => '', 'hours' => 999];
+
+    foreach ($results as $row) {
+        $hours = floatval($row['hours']);
+
+        if ($hours <= 0) continue;
+
+        $total += $hours;
+        $days++;
+
+        if ($hours > $max['hours']) {
+            $max = $row;
+        }
+
+        if ($hours < $min['hours']) {
+            $min = $row;
+        }
+    }
+
+    $avg = $days ? round($total / $days, 2) : 0;
+
+    ob_start();
+    ?>
+
+    <div class="stats-container">
+
+        <h2>Estadísticas <?php echo esc_html($year); ?></h2>
+
+        <div class="stats-box">
+            ⏱ Total: <b><?php echo number_format($total,1); ?>h</b><br>
+            📅 Promedio: <b><?php echo $avg; ?>h</b><br>
+            🔥 Días activos: <b><?php echo $days; ?></b><br>
+            📈 Máximo: <b><?php echo $max['hours']; ?>h</b> (<?php echo $max['date']; ?>)<br>
+            📉 Mínimo: <b><?php echo $min['hours']; ?>h</b> (<?php echo $min['date']; ?>)
+        </div>
+
+    </div>
+
+    <?php
+    return ob_get_clean();
+}
+
+add_shortcode('automation_stats', 'automation_stats_shortcode');
+
+
 
 function automation_hours_script(){
 ?>

@@ -2,8 +2,9 @@
 /*
 Plugin Name: Automation Hours Viewer
 Description: Displays hours from the Automation API.
-Version: 1.15.00
+Version: 1.20.01
 Author: Emmanuel
+modified date: 28-05-26
 */
 
 if (!defined('ABSPATH')) {
@@ -50,11 +51,7 @@ function automation_hours_shortcode($atts) {
         }
     }
 
-    
-
     $total_hours = 0;
-    
-
     foreach ($hours_by_date as $h) {
         $total_hours += $h;
     }
@@ -113,12 +110,9 @@ function automation_hours_shortcode($atts) {
     $output .= '<div class="months-row">';
 
     foreach ($period as $date_obj) {
-
         if ($date_obj->format('j') == 1) {
-
             $diff_days = $calendar_start->diff($date_obj)->days;
             $column = floor($diff_days / 7) + 1;
-
             $output .= '<span class="month-label" style="grid-column:' . $column . ';">'
                 . esc_html($date_obj->format('M')) .
                 '</span>';
@@ -144,179 +138,145 @@ function automation_hours_shortcode($atts) {
     $output .= '<span>Sun</span>';
     $output .= '</div>';
 
-    
-
-    /*
-======================================================
-GRID
-======================================================
-*/
-
-$output .= '<div class="automation-grid">';
-
-$period = new DatePeriod($calendar_start, $interval, $calendar_end);
-
-/*
-======================================================
-🧠 NUEVO: CONSUMIR STATUS DESDE AWS (/api/status)
-- Eliminamos el hardcode manual
-- Ahora el backend decide qué día es error
-- Esto convierte el sistema en automático
-======================================================
-*/
-
-$status_by_date = array();
-
-$response = wp_remote_get('https://api.emmanuelibarra.com/api/status');
-
-if (!is_wp_error($response)) {
-    $body = wp_remote_retrieve_body($response);
-    $data = json_decode($body, true);
-
-    if (is_array($data)) {
-        $status_by_date = $data;
-    }
-}
-
-/*
-======================================================
-RENDER DEL GRID
-======================================================
-*/
-
-$system_start_date = '2026-03-02';
-$today = date('Y-m-d');
-
-
-foreach ($period as $date_obj) {
-
-    $date = $date_obj->format('Y-m-d');
-    $is_today = ($date === $today);
-    $today_class = $is_today ? ' today' : '';
-
-    // Días de padding del calendario (fuera del año) → invisibles
-    if ($date_obj < $year_start || $date_obj > $year_end) {
-        $output .= '<div class="day level-0 empty"></div>';
-        continue;
-    }
-
-    // Días antes del sistema → gris normal, visibles
-    if ($date < $system_start_date) {
-        $output .= '<div class="day level-0" 
-            data-date="' . esc_attr($date) . '" 
-            data-hours="No data"></div>';
-        continue;
-    }
-    
-    
     /*
     ======================================================
-    🔴 PRIORIDAD 1: ERROR DEL SISTEMA (DESDE API)
-    - Si backend marca error → SIEMPRE rojo
-    - Ignora completamente las horas
+    GRID
     ======================================================
     */
-    /*5 tipos de datos: DNS Error, No data, error, timeout, api down */
-    
 
-    if (isset($status_by_date[$date]) && $status_by_date[$date]['status'] === 'error') {
+    $output .= '<div class="automation-grid">';
 
-        $type = $status_by_date[$date]['type'] ?? 'error';
+    $period = new DatePeriod($calendar_start, $interval, $calendar_end);
 
-        // 🔥 MAPEO HUMANO
-        switch ($type) {
-            case 'ECONNREFUSED':
-                $label = 'API Down';
-                break;
-            case 'ETIMEDOUT':
-                $label = 'Timeout';
-                break;
-            case 'ENOTFOUND':
-                $label = 'DNS Error';
-                break;
-            case 'no_data':
-                $label = 'No Data';
-                break;
-            default:
-                $label = 'Error';
+    /*
+    ======================================================
+    CONSUMIR STATUS DESDE AWS (/api/status)
+    ======================================================
+    */
+
+    $status_by_date = array();
+
+    $response = wp_remote_get('https://api.emmanuelibarra.com/api/status');
+
+    if (!is_wp_error($response)) {
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+
+        if (is_array($data)) {
+            $status_by_date = $data;
         }
-
-        $output .= '<div class="day level-error' . esc_attr($today_class) . '" 
-            data-date="' . esc_attr($date) . '" 
-            data-hours="' . esc_attr($label) . '"></div>';
-
-        continue;
-    }
-
-        $output .= '<div class="day ' . esc_attr($level . $today_class) . '"  
-        data-date="' . esc_attr($date) . '" 
-        data-hours="' . esc_attr($hours . ' hrs') . '"></div>';
-
-    /*
-    ======================================================
-    NO pintar días fuera del año
-    ======================================================
-    */
-    if ($date_obj < $year_start || $date_obj > $year_end) {
-        $output .= '<div class="day level-0 empty"></div>';
-        continue;
     }
 
     /*
     ======================================================
-    🟢 LÓGICA NORMAL (HORAS)
+    RENDER DEL GRID
     ======================================================
     */
-    $hours = isset($hours_by_date[$date]) ? (float)$hours_by_date[$date] : 0.0;
 
+    $system_start_date = '2026-03-02';
+    $today = date('Y-m-d');
     $max_hours = 23.3;
 
-    if ($hours === 0.0) {
-        $level = 'level-0';
-    } else {
+    foreach ($period as $date_obj) {
 
-        $ratio = $hours / $max_hours;
+        $date = $date_obj->format('Y-m-d');
+        $is_today = ($date === $today);
+        $today_class = $is_today ? ' today' : '';
 
-        if ($ratio <= 0.25) {
-            $level = 'level-1';
-        } elseif ($ratio <= 0.5) {
-            $level = 'level-2';
-        } elseif ($ratio <= 0.75) {
-            $level = 'level-3';
-        } else {
-            $level = 'level-4';
+        // Días de padding del calendario (fuera del año) → invisibles
+        if ($date_obj < $year_start || $date_obj > $year_end) {
+            $output .= '<div class="day level-0 empty"></div>';
+            continue;
         }
+
+        // Días antes del sistema → gris normal
+        if ($date < $system_start_date) {
+            $output .= '<div class="day level-0' . esc_attr($today_class) . '" 
+                data-date="' . esc_attr($date) . '" 
+                data-hours="No data"></div>';
+            continue;
+        }
+
+        /*
+        ======================================================
+        PRIORIDAD 1: ERROR DEL SISTEMA (DESDE API)
+        Si backend marca error → SIEMPRE rojo
+        ======================================================
+        */
+        if (isset($status_by_date[$date]) && $status_by_date[$date]['status'] === 'error') {
+
+            $type = $status_by_date[$date]['type'] ?? 'error';
+
+            switch ($type) {
+                case 'ECONNREFUSED':
+                    $label = 'API Down';
+                    break;
+                case 'ETIMEDOUT':
+                    $label = 'Timeout';
+                    break;
+                case 'ENOTFOUND':
+                    $label = 'DNS Error';
+                    break;
+                case 'no_data':
+                    $label = 'No Data';
+                    break;
+                default:
+                    $label = 'Error';
+            }
+
+            $output .= '<div class="day level-error' . esc_attr($today_class) . '" 
+                data-date="' . esc_attr($date) . '" 
+                data-hours="' . esc_attr($label) . '"></div>';
+            continue;
+        }
+
+        /*
+        ======================================================
+        PRIORIDAD 2: LÓGICA NORMAL (HORAS)
+        — Calcular primero, pintar después
+        ======================================================
+        */
+        $hours = isset($hours_by_date[$date]) ? (float)$hours_by_date[$date] : 0.0;
+
+        if ($hours === 0.0) {
+            $level = 'level-0';
+        } else {
+            $ratio = $hours / $max_hours;
+
+            if ($ratio <= 0.25) {
+                $level = 'level-1';
+            } elseif ($ratio <= 0.5) {
+                $level = 'level-2';
+            } elseif ($ratio <= 0.75) {
+                $level = 'level-3';
+            } else {
+                $level = 'level-4';
+            }
+        }
+
+        $output .= '<div class="day ' . esc_attr($level . $today_class) . '" 
+            data-date="' . esc_attr($date) . '" 
+            data-hours="' . esc_attr($hours . ' hrs') . '"></div>';
     }
 
-    
-
-}
-
-$output .= '<div id="automation-tooltip"></div>';
-$output .= '</div>'; // grid
-$output .= '</div>'; //
-
-
-
-
+    $output .= '<div id="automation-tooltip"></div>';
+    $output .= '</div>'; // .automation-grid
+    $output .= '</div>'; // .automation-container
 
     $output .= '<div class="automation-legend">';
     $output .= '<span class="legend-text">Less</span>';
-
     $output .= '<span class="legend-box level-0"></span>';
     $output .= '<span class="legend-box level-1"></span>';
     $output .= '<span class="legend-box level-2"></span>';
     $output .= '<span class="legend-box level-3"></span>';
     $output .= '<span class="legend-box level-4"></span>';
-
     $output .= '<span class="legend-box level-error"></span>';
     $output .= '<span class="legend-text">API Error</span>';
-
     $output .= '<span class="legend-text">More</span>';
     $output .= '</div>';
 
-    $output .= '</div>'; // card
-    $output .= '</div>'; // wrapper
+    $output .= '</div>'; // .automation-card
+    $output .= '</div>'; // .automation-wrapper
 
     return $output;
 }
@@ -390,7 +350,6 @@ function automation_sync_from_api() {
 
     foreach ($data as $item) {
         if (isset($item['date'], $item['hours'])) {
-
             $wpdb->replace(
                 $table_name,
                 array(
@@ -447,7 +406,7 @@ function automation_hours_styles() {
     }
 
     .months-row {
-		margin-left: 48px;
+        margin-left: 48px;
         display: grid;
         grid-auto-flow: column;
         grid-auto-columns: 14px;
@@ -471,9 +430,9 @@ function automation_hours_styles() {
         gap: 4px;
         min-width: max-content;
     }
-    
+
     .empty {
-    visibility: hidden;
+        visibility: hidden;
     }
 
     .day {
@@ -486,116 +445,107 @@ function automation_hours_styles() {
     .level-1 { background: #9be9a8; }
     .level-2 { background: #40c463; }
     .level-3 { background: #216e39; }
-    .level-4 { background: #0e4429; } /* verde más intenso */
-
+    .level-4 { background: #0e4429; }
 
     .header-controls {
-        justify-self:center;
-        display:flex;
-        align-items:center;
-        gap:10px;
+        justify-self: center;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .automation-stats-link {
-        font-size:11px;
-        color:#0969da;
-        text-decoration:none;
+        font-size: 11px;
+        color: #0969da;
+        text-decoration: none;
     }
 
     .automation-stats-link:hover {
-        text-decoration:underline;
+        text-decoration: underline;
     }
 
-    .automation-card{
-        border:1px solid #d0d7de;
-        border-radius:6px;
-        padding:16px;
-        background:#ffffff;
-
-        overflow-x:auto;
-        overflow-y:hidden;  
+    .automation-card {
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        padding: 16px;
+        background: #ffffff;
+        overflow-x: auto;
+        overflow-y: hidden;
     }
 
     .automation-wrapper::-webkit-scrollbar {
-        height:8px;
+        height: 8px;
     }
 
     .automation-wrapper::-webkit-scrollbar-thumb {
-        background:#c9d1d9;
-        border-radius:4px;
+        background: #c9d1d9;
+        border-radius: 4px;
     }
 
     .automation-wrapper::-webkit-scrollbar-track {
-        background:transparent;
+        background: transparent;
     }
 
-    .automation-legend{
-        display:flex;
-        align-items:center;
-        justify-content:flex-end;
-        gap:4px;
-        margin-top:8px;
-        font-size:10px;
+    .automation-legend {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+        margin-top: 8px;
+        font-size: 10px;
     }
 
-    .legend-box{
-        width:12px;
-        height:12px;
-        border-radius:2px;
+    .legend-box {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
     }
 
-    .legend-text{
-        margin:0 4px;
+    .legend-text {
+        margin: 0 4px;
     }
 
-    .automation-card{
-        border:1px solid #d0d7de;
-        border-radius:6px;
-        padding:16px;
-        background:#ffffff;
-        max-width:100%;
-    }
-        .automation-total-hours{
-        justify-self:start;
-        font-size:13px;
-        font-weight:600;
-        color:#24292f;
+    .automation-total-hours {
+        justify-self: start;
+        font-size: 13px;
+        font-weight: 600;
+        color: #24292f;
     }
 
-    #automation-tooltip{
-        position:absolute;
-        background:#24292f;
-        color:#fff;
-        font-size:11px;
-        padding:6px 8px;
-        border-radius:6px;
-        pointer-events:none;
-        opacity:0;
-        transform:translate(-50%,-120%);
-        white-space:nowrap;
-        z-index:9999;
-        transition:opacity .15s ease;
+    #automation-tooltip {
+        position: absolute;
+        background: #24292f;
+        color: #fff;
+        font-size: 11px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        pointer-events: none;
+        opacity: 0;
+        transform: translate(-50%, -120%);
+        white-space: nowrap;
+        z-index: 9999;
+        transition: opacity .15s ease;
     }
 
-    .day.active{
-        position:relative;
-        transform:scale(3);
-        z-index:20;
-        box-shadow:0 2px 6px rgba(0,0,0,.2);
+    .day.active {
+        position: relative;
+        transform: scale(3);
+        z-index: 20;
+        box-shadow: 0 2px 6px rgba(0,0,0,.2);
     }
 
-    .day.active::after{
-        content:attr(data-date) " — " attr(data-hours);
-        position:absolute;
-        top:18px;
-        left:50%;
-        transform:translateX(-50%);
-        background:#24292f;
-        color:#fff;
-        font-size:10px;
-        padding:4px 6px;
-        border-radius:4px;
-        white-space:nowrap;
+    .day.active::after {
+        content: attr(data-date) " — " attr(data-hours);
+        position: absolute;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #24292f;
+        color: #fff;
+        font-size: 10px;
+        padding: 4px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
     }
 
     .level-error {
@@ -615,8 +565,8 @@ function automation_hours_styles() {
 
     .day.today.active {
         animation-play-state: paused;
-    }   
-  
+    }
+
     .stats-container {
         max-width: 800px;
         margin: 40px auto;
@@ -660,12 +610,10 @@ function automation_hours_styles() {
     ';
 }
 
-add_action('wp_footer','automation_hours_script');
+add_action('wp_footer', 'automation_hours_script');
 
 
-
-
-// Estadísticas detalladas (total, promedio, días activos, máximo, mínimo) - funcion nueva
+// Estadísticas detalladas
 function automation_stats_shortcode() {
 
     global $wpdb;
@@ -685,51 +633,31 @@ function automation_stats_shortcode() {
         return '<p>No hay datos.</p>';
     }
 
-    $total = 0;
-    $days = 0;
-    $max = ['date' => '', 'hours' => 0];
-    $min = ['date' => '', 'hours' => 999];
+    $total   = 0;
+    $days    = 0;
+    $max     = ['date' => '', 'hours' => 0];
+    $min     = ['date' => '', 'hours' => 999];
+    $weekly  = [];
 
     foreach ($results as $row) {
 
-        $weekly = [];
-
-    foreach ($results as $row) {
-
-        $date = $row['date'];
+        $date  = $row['date'];
         $hours = floatval($row['hours']);
 
         if ($hours <= 0) continue;
 
-        $week = date('o-W', strtotime($date)); // año-semana ISO
+        $week = date('o-W', strtotime($date));
 
         if (!isset($weekly[$week])) {
             $weekly[$week] = 0;
         }
-
         $weekly[$week] += $hours;
 
-        // lo que ya tenías:
         $total += $hours;
         $days++;
 
         if ($hours > $max['hours']) $max = $row;
         if ($hours < $min['hours']) $min = $row;
-    }
-        $hours = floatval($row['hours']);
-
-        if ($hours <= 0) continue;
-
-        $total += $hours;
-        $days++;
-
-        if ($hours > $max['hours']) {
-            $max = $row;
-        }
-
-        if ($hours < $min['hours']) {
-            $min = $row;
-        }
     }
 
     $avg = $days ? round($total / $days, 2) : 0;
@@ -737,43 +665,40 @@ function automation_stats_shortcode() {
     ob_start();
     ?>
 
-
-    <div class="stats-weekly">
-
-        <h3>Horas por semana</h3>
-
-        <?php 
-        $max_week = max($weekly); // para escalar barras
-
-        foreach ($weekly as $week => $hours):
-
-            $percent = ($hours / $max_week) * 100;
-        ?>
-
-            <div class="week-row">
-                <span class="week-label"><?php echo $week; ?></span>
-
-                <div class="week-bar">
-                    <div class="week-fill" style="width: <?php echo $percent; ?>%"></div>
-                </div>
-
-                <span class="week-hours"><?php echo round($hours,1); ?>h</span>
-            </div>
-
-        <?php endforeach; ?>
-
-    </div>
-
     <div class="stats-container">
 
         <h2>Estadísticas <?php echo esc_html($year); ?></h2>
 
         <div class="stats-box">
-            ⏱ Total: <b><?php echo number_format($total,1); ?>h</b><br>
+            ⏱ Total: <b><?php echo number_format($total, 1); ?>h</b><br>
             📅 Promedio: <b><?php echo $avg; ?>h</b><br>
             🔥 Días activos: <b><?php echo $days; ?></b><br>
             📈 Máximo: <b><?php echo $max['hours']; ?>h</b> (<?php echo $max['date']; ?>)<br>
             📉 Mínimo: <b><?php echo $min['hours']; ?>h</b> (<?php echo $min['date']; ?>)
+        </div>
+
+        <div class="stats-weekly">
+
+            <h3>Horas por semana</h3>
+
+            <?php
+            if (!empty($weekly)):
+                $max_week = max($weekly);
+                foreach ($weekly as $week => $hours):
+                    $percent = ($hours / $max_week) * 100;
+            ?>
+                <div class="week-row">
+                    <span class="week-label"><?php echo esc_html($week); ?></span>
+                    <div class="week-bar">
+                        <div class="week-fill" style="width: <?php echo $percent; ?>%"></div>
+                    </div>
+                    <span class="week-hours"><?php echo round($hours, 1); ?>h</span>
+                </div>
+            <?php
+                endforeach;
+            endif;
+            ?>
+
         </div>
 
     </div>
@@ -785,8 +710,7 @@ function automation_stats_shortcode() {
 add_shortcode('automation_stats', 'automation_stats_shortcode');
 
 
-
-function automation_hours_script(){
+function automation_hours_script() {
 ?>
 
 <script>
@@ -821,19 +745,3 @@ function automation_hours_script(){
 
 <?php
 }
-
-
-/*
-fechas: del 19 al 28 de febrero, la api no existia
-CAMBIOS
-los datos del 24 al 30 de marzo estaban alojados en el plugin.
-
-Ahora: el plugin detecta 6 dias sin datos = error. 
-Es decir, genera esto: "2026-03-25": { "status": "error" }
-
-el color rojo depende de la ausencia de datos. Se estan calculando en vivo.
-
-Es decir, si manana llegan datos nuevos, los colores rojos desapareceran. Sin limpiar manualmente. Se sistema se vuelve autosuficiente.
-
-Se hizo esto: estado = funcion(datos) y dejamos esto atras: estado = dato guardado
-*/

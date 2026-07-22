@@ -218,6 +218,7 @@ foreach ($period as $date_obj) {
     ======================================================
     */
     /*5 tipos de datos: DNS Error, No data, error, timeout, api down */
+    //error de logica: esto nunca se evalua del centro de datos. siempre caera en la logica de revisar solo un dia. es lo unico que revisa. un solo dia. no una base de datos. 
     
 
     if (isset($status_by_date[$date]) && $status_by_date[$date]['status'] === 'error') {

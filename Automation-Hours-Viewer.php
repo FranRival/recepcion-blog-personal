@@ -839,3 +839,12 @@ Es decir, si manana llegan datos nuevos, los colores rojos desapareceran. Sin li
 
 Se hizo esto: estado = funcion(datos) y dejamos esto atras: estado = dato guardado
 */
+
+///ERRORES 22/7/26
+//El problema principal: si no hay una fila en la base de datos para el dia X - asumire que fue un error. el peor de todos los errores. 
+
+//Paused_ranges - en una tabla de SQLite donde diga explicitamente: desde tal fecha hasta tal fecha apague el sistema a proposito. 
+
+//EXPRESS: es una libreria que da superpoderes a Node para actuar como servidor web. Recibe peticiones HTTP, Get y Post
+//npm: es el instalador de paquetes. Al agregar esa linea suceden 2 cosas, se descarga el codigo dentro de la carpeta node modules. ahi viven express, axios, sqlite3
+//se crea el archivo package.json que librerias se usan y en que version package.json, package-lock.json y node_modules. archivos que se crean al comenzar con el proyecto.

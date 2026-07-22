@@ -848,3 +848,7 @@ Se hizo esto: estado = funcion(datos) y dejamos esto atras: estado = dato guarda
 //EXPRESS: es una libreria que da superpoderes a Node para actuar como servidor web. Recibe peticiones HTTP, Get y Post
 //npm: es el instalador de paquetes. Al agregar esa linea suceden 2 cosas, se descarga el codigo dentro de la carpeta node modules. ahi viven express, axios, sqlite3
 //se crea el archivo package.json que librerias se usan y en que version package.json, package-lock.json y node_modules. archivos que se crean al comenzar con el proyecto.
+
+//sqlite3 es una libreria. 
+//database.sqlite - es un archivador donde viviran los datos.
+//sqlite3 es la liberria Node que sabe como hablar con database.sqlite. es el traductor entre JS y el archivo binario. esta libreria da db.all, db.run, 
